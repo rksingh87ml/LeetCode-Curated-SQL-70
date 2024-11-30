@@ -1,6 +1,11 @@
 # Write your MySQL query statement below
-SELECT customer_number
-FROM Orders
-GROUP BY customer_number
-ORDER BY count(*) DESC
-LIMIT 1;
+select 
+      customer_number
+from (
+            select 
+                customer_number ,
+                count(order_number) as total_order,
+                dense_rank() over ( order by count(order_number) desc) as rnk
+            from Orders 
+            group by customer_number) temp
+where rnk = 1
