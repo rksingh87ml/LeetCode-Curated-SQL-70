@@ -1,11 +1,17 @@
-WITH tomorrow_cte AS (
-    SELECT player_id, DATE_ADD(MIN(event_date), INTERVAL 1 DAY) AS tomorrow_date
-    FROM Activity
-    GROUP BY player_id
-)
+# find the players for consecutive dates from first login 
+# get first login and next login 
+# total consecutive players / total players 
 
-SELECT ROUND(COUNT(DISTINCT a.player_id) / (SELECT COUNT(DISTINCT player_id) 
-                                             FROM Activity), 2) AS fraction
-FROM Activity a
-JOIN tomorrow_cte t ON t.player_id = a.player_id AND t.tomorrow_date = a.event_date
+with Activity_CTE as (
+                    select 
+                        player_id,
+                        event_date,
+                        row_number() over ( partition by player_id order by event_date) as first_login,
+                        lead(event_date,1) over (partition by player_id order by event_date) as next_login 
+                    from Activity)
 
+select
+       round(coalesce(count(distinct AC.player_id) / temp.total_player,0) ,2) as fraction 
+from Activity_CTE  AC join (select count(distinct player_id) as total_player from Activity) temp
+where first_login = 1
+and ifnull(datediff(next_login,event_date),0) = 1
