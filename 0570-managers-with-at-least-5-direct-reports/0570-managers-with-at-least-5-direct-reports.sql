@@ -1,6 +1,14 @@
 # Write your MySQL query statement below
-SELECT      E2.name
-FROM        Employee E1, Employee E2
-WHERE       E1.managerId  = E2.id  
-GROUP BY    E1.managerId
-HAVING      COUNT(E1.managerId) >= 5 
+# manager with at least five direct reports 
+
+select 
+emp.name 
+from Employee emp join 
+(
+select 
+managerId from Employee
+group by managerId
+having count(id) >= 5 ) mgr
+on mgr. managerId = emp.id 
+ 
+
