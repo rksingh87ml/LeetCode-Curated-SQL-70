@@ -1,20 +1,18 @@
 # Write your MySQL query statement below
-SELECT DISTINCT l.page_id AS recommended_page
-FROM Likes l
-JOIN (
-  SELECT user2_id AS user_id 
-  FROM Friendship 
-  WHERE user1_id = 1 
-    
-  UNION 
-    
-  SELECT user1_id AS user_id 
-  FROM Friendship 
-  WHERE user2_id = 1
-) f
-ON l.user_id = f.user_id
-WHERE l.page_id NOT IN (
-  SELECT page_id 
-  FROM Likes 
-  WHERE user_id = 1
-)
+
+with CTE as (
+        select 
+         user2_id as friend_id 
+        from Friendship
+        where user1_id = 1 
+        union 
+        select 
+         user1_id as friend_id 
+        from Friendship
+        where user2_id = 1)
+
+select 
+distinct LK.page_id as recommended_page
+from CTE join Likes LK
+on LK.user_id = CTE.friend_id
+where LK.page_id not in ( select  page_id from Likes where user_id = 1)
