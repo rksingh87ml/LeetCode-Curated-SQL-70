@@ -1,22 +1,28 @@
-SELECT team_id, team_name, COALESCE(SUM(num_points), 0) as num_points
-FROM (
-  SELECT t.team_id, t.team_name,
-  CASE
-    WHEN host_goals > guest_goals THEN 3
-    WHEN host_goals = guest_goals THEN 1
-    ELSE 0
-  END AS num_points
-  FROM Teams t LEFT JOIN Matches m ON t.team_id = m.host_team
+with matches_score as (
+
+        select 
+            T.team_id, T.team_name , 
+            case when host_goals > guest_goals then 3 
+                when host_goals = guest_goals then 1
+                when host_goals < guest_goals then 0 
+            end as num_points 
+
+        from Teams  T
+        left join Matches M on M.host_team = T.team_id 
+        union all 
+        select 
+            T.team_id, T.team_name , 
+            case when host_goals > guest_goals then 0
+                when host_goals = guest_goals then 1
+                when host_goals < guest_goals then 3
+            end as num_points 
+
+        from Teams  T
+        left join Matches M on M.guest_team = T.team_id )
+
     
-  UNION ALL
-    
-  SELECT t.team_id, t.team_name,
-  CASE
-    WHEN guest_goals > host_goals THEN 3
-    WHEN guest_goals = host_goals THEN 1
-    ELSE 0
-  END AS num_points
-  FROM Teams t LEFT JOIN Matches m ON t.team_id = m.guest_team
-) as all_matches
-GROUP BY team_id
-ORDER BY num_points DESC, team_id ASC;
+    select 
+       team_id, team_name, sum(coalesce(num_points,0)) as num_points
+    from matches_score
+    group by team_id, team_name
+    order by num_points desc , team_id
